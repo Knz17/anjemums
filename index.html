@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kalkulator Tarif Anjem</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      max-width: 500px;
+      margin: 30px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .checkbox,
+    .radio-group {
+      margin-top: 10px;
+    }
+    .radio-group label {
+      font-weight: normal;
+      display: block;
+      margin-left: 20px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #fffdd0;
+      color: rgb(0, 0, 0);
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ffd700;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Kalkulator Tarif Anjem / Jastip</h2>
+
+  <label for="jarak">Jarak Tempuh (km):</label>
+  <input type="number" id="jarak" step="0.1" placeholder="Contoh: 3.7">
+
+  <div class="checkbox">
+    <label><input type="checkbox" id="parkir"> Tambah Biaya Parkir (Rp2.000)</label>
+  </div>
+
+  <div class="radio-group">
+    <label>Cuaca:</label>
+    <label><input type="radio" name="cuaca" value="cerah" checked> Cerah</label>
+    <label><input type="radio" name="cuaca" value="ringan"> Hujan Ringan (+Rp1.000)</label>
+    <label><input type="radio" name="cuaca" value="deras"> Hujan Deras (+Rp2.000)</label> 
+  </div>
+
+  <div class="radio-group">
+    <label>Pindah Titik?</label>
+    <label><input type="radio" name="move" value="tidak" checked> Tidak</label>
+    <label><input type="radio" name="move" value="pindah"> Ya (+Rp2.000)</label>
+  </div>
+
+
+  <div class="radio-group">
+    <label>Ramai?</label>
+    <label><input type="radio" name="ramai" value="tidak" checked > Tidak</label>
+    <label><input type="radio" name="ramai" value="ramai"> Ya (+Rp2.000)</label>
+  </div>
+
+  <button onclick="hitungTarif()">Hitung Tarif</button>
+
+  <div class="result" id="hasil"></div>
+
+  <script>
+    function hitungTarif() {
+      const jarak = parseFloat(document.getElementById("jarak").value);
+      const parkir = document.getElementById("parkir").checked;
+      const cuaca = document.querySelector('input[name="cuaca"]:checked').value;
+      const move = document.querySelector('input[name="move"]:checked').value;
+
+      if (isNaN(jarak) || jarak < 0) {
+        document.getElementById("hasil").textContent = "Masukkan jarak yang valid!";
+        return;
+      }
+
+      let total = 0;
+
+      if (jarak <= 2) {
+        total = 4000;
+      } else if (jarak > 2 && jarak < 3) {
+        total = 5500;
+      } else if (jarak >= 3 && jarak <= 5.5) {
+        let tambahan = Math.ceil((jarak - 3) / 1) * 1500;
+        total = 5500 + tambahan;
+      } else if (jarak > 5.5 && jarak <= 10) {
+        let tambahan = Math.ceil((jarak - 5.5) / 0.5) * 1500;
+        total = 5500 + (3 * 1500) + tambahan;
+      } else {
+        total = 15000;
+      }
+
+      if (parkir) {
+        total += 2000;
+      }
+
+      if (cuaca === "ringan") {
+        total += 2000;
+      } else if (cuaca === "deras") {
+        total += 2000;
+      }
+
+      if (move === "pindah") {
+        total += 1000;
+      }
+
+      if (ramai === "merah") {
+        total += 2000;
+      }
+
+      document.getElementById("hasil").textContent = `Total Tarif: Rp${total.toLocaleString()}`;
+    }
+  </script>
+</body>
+</html>

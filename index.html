@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kalkulator Tarif Anjem</title>
+  <title>Tarif Anjem</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f9f9f9;
-      max-width: 500px;
+      max-width: 600px;
       margin: 30px auto;
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      transition: background-color 0.4s, color 0.4s;
     }
     h2 {
       text-align: center;
@@ -24,7 +23,7 @@
       margin-top: 12px;
       font-weight: bold;
     }
-    input[type="number"] {
+    input[type="number"], input[type="text"] {
       width: 100%;
       padding: 8px;
       margin-top: 4px;
@@ -41,7 +40,7 @@
       margin-left: 20px;
     }
     button {
-      margin-top: 15px;
+      margin-top: 20px;
       width: 100%;
       padding: 10px;
       background-color: #fffdd0;
@@ -50,7 +49,6 @@
       border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s;
     }
     button:hover {
       background-color: #ffd700;
@@ -60,21 +58,7 @@
       font-size: 18px;
       font-weight: bold;
       text-align: center;
-      opacity: 0;
-      transition: opacity 0.4s ease-in-out;
-    }
-    .result.show {
-      opacity: 1;
-    }
-    .dark-mode {
-      background-color: #1f1f1f;
-      color: #f1f1f1;
-    }
-    .dark-mode input,
-    .dark-mode button {
-      background-color: #333;
-      color: white;
-      border: 1px solid #666;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -107,9 +91,20 @@
     <label><input type="radio" name="ramai" value="ramai"> Ya (+Rp2.000)</label>
   </div>
 
+  <label for="pesanan">Titipan / Pesanan (Nama - Harga, pisahkan baris baru):</label>
+  <input type="text" id="pesanan" placeholder="Contoh: Ayam Geprek - 18000\nEs Teh - 5000">
+
+  <label>Metode Pembayaran:</label>
+  <label><input type="radio" name="pembayaran" value="Cash" checked> Cash</label>
+  <label><input type="radio" name="pembayaran" value="QRIS"> QRIS</label>
+  <label><input type="radio" name="pembayaran" value="Transfer"> Transfer</label>
+
+  <div class="checkbox">
+    <label><input type="checkbox" id="pp"> Simulasi Bolak-Balik</label>
+  </div>
+
   <button onclick="hitungTarif()">Hitung Tarif</button>
-  <button onclick="resetForm()">🔄 Reset</button>
-  <button onclick="toggleMode()">🌓 Ubah Tema</button>
+  <button onclick="kirimWhatsApp()">Kirim ke WhatsApp</button>
 
   <div class="result" id="hasil"></div>
 
@@ -120,58 +115,75 @@
       const cuaca = document.querySelector('input[name="cuaca"]:checked').value;
       const move = document.querySelector('input[name="move"]:checked').value;
       const ramai = document.querySelector('input[name="ramai"]:checked').value;
-      const hasil = document.getElementById("hasil");
+      const pesananInput = document.getElementById("pesanan").value;
+      const metode = document.querySelector('input[name="pembayaran"]:checked').value;
+      const bolakBalik = document.getElementById("pp").checked;
 
-      if (isNaN(jarak) || jarak < 0) {
-        hasil.textContent = "Masukkan jarak yang valid!";
-        hasil.classList.add("show");
+      if (isNaN(jarak) || jarak <= 0) {
+        document.getElementById("hasil").textContent = "Masukkan jarak yang valid!";
         return;
       }
 
-      let total = 0;
-
+      let tarif = 0;
       if (jarak <= 2) {
-        total = 4000;
-      } else if (jarak > 2 && jarak <= 6) {
-        total = 4000 + Math.ceil((jarak - 2) / 0.5) * 1500;
-      } else if (jarak > 6 && jarak <= 10) {
-        total = 16000 + Math.ceil((jarak - 6) / 1) * 1000;
+        tarif = 4000;
+      } else if (jarak <= 6) {
+        if (jarak <= 3) tarif = 7000;
+        else if (jarak <= 3.5) tarif = 8500;
+        else if (jarak <= 4) tarif = 10000;
+        else if (jarak <= 4.5) tarif = 11500;
+        else if (jarak <= 5) tarif = 13000;
+        else if (jarak <= 5.5) tarif = 14500;
+        else tarif = 15000;
+      } else if (jarak <= 10) {
+        if (jarak <= 7) tarif = 17000;
+        else if (jarak <= 8) tarif = 18000;
+        else if (jarak <= 9) tarif = 19000;
+        else tarif = 20000;
       } else {
-        total = 21000 + Math.ceil((jarak - 10));
+        tarif = 21000 + Math.ceil(jarak - 11) * 1000;
       }
 
-      if (parkir) total += 2000;
-      if (cuaca === "ringan") total += 1000;
-      if (cuaca === "deras") total += 2000;
-      if (move === "pindah") total += 1000;
-      if (ramai === "ramai") total += 2000;
+      if (parkir) tarif += 2000;
+      if (cuaca === "ringan") tarif += 1000;
+      if (cuaca === "deras") tarif += 2000;
+      if (move === "pindah") tarif += 1000;
+      if (ramai === "ramai") tarif += 2000;
+      if (bolakBalik) tarif *= 2;
 
-      let estimasiWaktu = jarak * 3;
-      if (cuaca === "ringan") estimasiWaktu += 3;
-      if (cuaca === "deras") estimasiWaktu += 7;
-      if (ramai === "ramai") estimasiWaktu += 5;
+      let totalPesanan = 0;
+      let rincianPesanan = "";
+      if (pesananInput.trim() !== "") {
+        const items = pesananInput.split('\n');
+        items.forEach(item => {
+          const [nama, harga] = item.split("-");
+          const h = parseInt(harga);
+          if (!isNaN(h)) {
+            rincianPesanan += `\n- ${nama.trim()}: Rp${h.toLocaleString()}`;
+            totalPesanan += h;
+          }
+        });
+      } else {
+        rincianPesanan = "\n(Tidak ada)";
+      }
 
-      hasil.innerHTML = `
-        Total Tarif: Rp${total.toLocaleString()}<br>
-        Estimasi Waktu Tempuh: ${Math.round(estimasiWaktu)} menit
-      `;
-      hasil.classList.remove("show");
-      setTimeout(() => hasil.classList.add("show"), 100);
+      const totalBayar = tarif + totalPesanan;
+
+      const hasil = `📦 Rincian Jastip 📦\n\nPesanan:${rincianPesanan}\n\nJarak: ${jarak} km\nMetode Bayar: ${metode}\nCuaca: ${cuaca}\nParkir: ${parkir ? "Ya" : "Tidak"}\nPindah Titik: ${move === "pindah" ? "Ya" : "Tidak"}\nRamai: ${ramai === "ramai" ? "Ya" : "Tidak"}\nBolak-balik: ${bolakBalik ? "Ya" : "Tidak"}\n\nTarif Jasa: Rp${tarif.toLocaleString()}\nTotal Pesanan: Rp${totalPesanan.toLocaleString()}\n\n💰 Total Bayar: Rp${totalBayar.toLocaleString()}`;
+
+      document.getElementById("hasil").textContent = hasil;
     }
 
-    function resetForm() {
-      document.getElementById("jarak").value = '';
-      document.getElementById("parkir").checked = false;
-      document.querySelector('input[name="cuaca"][value="cerah"]').checked = true;
-      document.querySelector('input[name="move"][value="tidak"]').checked = true;
-      document.querySelector('input[name="ramai"][value="tidak"]').checked = true;
-      const hasil = document.getElementById("hasil");
-      hasil.textContent = '';
-      hasil.classList.remove("show");
-    }
-
-    function toggleMode() {
-      document.body.classList.toggle("dark-mode");
+    function kirimWhatsApp() {
+      const hasil = document.getElementById("hasil").innerText;
+      if (!hasil) {
+        alert("Silakan hitung tarif dulu!");
+        return;
+      }
+      const nomor = prompt("Masukkan nomor WhatsApp customer (tanpa +62):");
+      if (!nomor) return;
+      const link = `https://wa.me/62${nomor}?text=${encodeURIComponent(hasil)}`;
+      window.open(link, "_blank");
     }
   </script>
 </body>

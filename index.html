@@ -13,6 +13,7 @@
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      transition: background-color 0.4s, color 0.4s;
     }
     h2 {
       text-align: center;
@@ -40,7 +41,7 @@
       margin-left: 20px;
     }
     button {
-      margin-top: 20px;
+      margin-top: 15px;
       width: 100%;
       padding: 10px;
       background-color: #fffdd0;
@@ -49,6 +50,7 @@
       border-radius: 6px;
       font-size: 16px;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
     button:hover {
       background-color: #ffd700;
@@ -58,6 +60,21 @@
       font-size: 18px;
       font-weight: bold;
       text-align: center;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out;
+    }
+    .result.show {
+      opacity: 1;
+    }
+    .dark-mode {
+      background-color: #1f1f1f;
+      color: #f1f1f1;
+    }
+    .dark-mode input,
+    .dark-mode button {
+      background-color: #333;
+      color: white;
+      border: 1px solid #666;
     }
   </style>
 </head>
@@ -84,7 +101,6 @@
     <label><input type="radio" name="move" value="pindah"> Ya (+Rp1.000)</label>
   </div>
 
-
   <div class="radio-group">
     <label>Ramai?</label>
     <label><input type="radio" name="ramai" value="tidak" checked > Tidak</label>
@@ -92,61 +108,71 @@
   </div>
 
   <button onclick="hitungTarif()">Hitung Tarif</button>
+  <button onclick="resetForm()">🔄 Reset</button>
+  <button onclick="toggleMode()">🌓 Ubah Tema</button>
 
   <div class="result" id="hasil"></div>
 
   <script>
     function hitungTarif() {
-        const jarak = parseFloat(document.getElementById("jarak").value);
-        const parkir = document.getElementById("parkir").checked;
-        const cuaca = document.querySelector('input[name="cuaca"]:checked').value;
-        const move = document.querySelector('input[name="move"]:checked').value;
-        const ramai = document.querySelector('input[name="ramai"]:checked').value; // ← tambahkan ini
-      
-        if (isNaN(jarak) || jarak < 0) {
-          document.getElementById("hasil").textContent = "Masukkan jarak yang valid!";
-          return;
-        }
-      
-        let total = 0;
+      const jarak = parseFloat(document.getElementById("jarak").value);
+      const parkir = document.getElementById("parkir").checked;
+      const cuaca = document.querySelector('input[name="cuaca"]:checked').value;
+      const move = document.querySelector('input[name="move"]:checked').value;
+      const ramai = document.querySelector('input[name="ramai"]:checked').value;
+      const hasil = document.getElementById("hasil");
 
-if (jarak <= 2) {
-  total = 4000;
-} else if (jarak > 2 && jarak < 3) {
-  total = 5500;
-} else if (jarak >= 3 && jarak <= 5.5) {
-  let tambahan = Math.ceil((jarak - 3) / 0.5) * 1500;
-  total = 5500 + tambahan;
-} else if (jarak > 5.5 && jarak <= 10) {
-  let tambahan1 = Math.ceil((5.5 - 3) / 0.5) * 1500;
-  let tambahan2 = Math.ceil((jarak - 5.5) / 0.5) * 1500;
-  total = 5500 + tambahan1 + tambahan2;
-} else {
-  total = 15000;
-}
-
-      
-        if (parkir) {
-          total += 2000;
-        }
-      
-        if (cuaca === "ringan") {
-          total += 1000;
-        } else if (cuaca === "deras") {
-          total += 2000;
-        }
-      
-        if (move === "pindah") {
-          total += 1000;
-        }
-      
-        if (ramai === "ramai") {
-          total += 2000;
-        }
-      
-        document.getElementById("hasil").textContent = `Total Tarif: Rp${total.toLocaleString()}`;
+      if (isNaN(jarak) || jarak < 0) {
+        hasil.textContent = "Masukkan jarak yang valid!";
+        hasil.classList.add("show");
+        return;
       }
-      
+
+      let total = 0;
+
+      if (jarak <= 2) {
+        total = 4000;
+      } else if (jarak > 2 && jarak <= 6) {
+        total = 4000 + Math.ceil((jarak - 2) / 0.5) * 1500;
+      } else if (jarak > 6 && jarak <= 10) {
+        total = 16000 + Math.ceil((jarak - 6) / 1) * 1000;
+      } else {
+        total = 21000 + Math.ceil((jarak - 10));
+      }
+
+      if (parkir) total += 2000;
+      if (cuaca === "ringan") total += 1000;
+      if (cuaca === "deras") total += 2000;
+      if (move === "pindah") total += 1000;
+      if (ramai === "ramai") total += 2000;
+
+      let estimasiWaktu = jarak * 3;
+      if (cuaca === "ringan") estimasiWaktu += 3;
+      if (cuaca === "deras") estimasiWaktu += 7;
+      if (ramai === "ramai") estimasiWaktu += 5;
+
+      hasil.innerHTML = `
+        Total Tarif: Rp${total.toLocaleString()}<br>
+        Estimasi Waktu Tempuh: ${Math.round(estimasiWaktu)} menit
+      `;
+      hasil.classList.remove("show");
+      setTimeout(() => hasil.classList.add("show"), 100);
+    }
+
+    function resetForm() {
+      document.getElementById("jarak").value = '';
+      document.getElementById("parkir").checked = false;
+      document.querySelector('input[name="cuaca"][value="cerah"]').checked = true;
+      document.querySelector('input[name="move"][value="tidak"]').checked = true;
+      document.querySelector('input[name="ramai"][value="tidak"]').checked = true;
+      const hasil = document.getElementById("hasil");
+      hasil.textContent = '';
+      hasil.classList.remove("show");
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("dark-mode");
+    }
   </script>
 </body>
 </html>
